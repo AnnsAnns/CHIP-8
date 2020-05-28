@@ -114,6 +114,45 @@ func (chip8 *Chip8) emu_cycle() {
 			chip8.pc += 2
 		}
 		break
+	case 0x5000: // 5xy0: Skip next instruction if Vx = Vy.
+		if chip8.V[chip8.opcode & 0x0F00] == chip8.V[chip8.opcode & 0x00F0] {
+			chip8.pc += 4
+		} else {
+			chip8.pc += 2
+		}
+		break
+	case 0x6000: // 6xkk: Set Vx = kk
+		chip8.V[chip8.opcode & 0x0F00] = byte(chip8.opcode & 0x00FF)
+		chip8.pc += 2
+		break
+	case 0x7000: // 7xkk: Vx = Vx + kk.
+		chip8.V[chip8.opcode & 0x0F00] += byte(chip8.opcode & 0x00FF)
+		chip8.pc += 2
+		break
+	case 0x8000: 
+		switch (chip8.opcode & 0x000F) {
+		case 0x0000: // 8XY0: Set Vx = Vy.
+			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x00F0]
+			chip8.pc += 2
+			break
+		case 0x0001: // 8XY1: set Vx = Vx OR Vy.
+		break
+		case 0x0002: // 8XY2: Set Vx = Vx AND Vy.
+		break
+		case 0x0003: // 8XY3: Set Vx = Vx XOR Vy.
+		break
+		case 0x0004: // 8XY4: Set Vx = Vx + Vy, set VF = carry.
+		break
+		case 0x0005: // 8XY5: Set Vx = Vx - Vy, set VF = NOT borrow.
+		break
+		case 0x0006: // 8XY6: Set Vx = Vx SHR 1.
+		break
+		case 0x0007: // 8XY7: Set Vx = Vy - Vx, set VF = NOT borrow.
+		break
+		case 0x000E: // 8XY8: Set Vx = Vx SHL 1.
+		break
+		}
+		break
 	case 0xA000: // ANNN: Sets I to the adress NNN
 		chip8.I = chip8.opcode & 0x0FFF
 		chip8.pc += 2
