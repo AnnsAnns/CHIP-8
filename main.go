@@ -23,6 +23,8 @@ type Chip8 struct {
 	stackpointer uint
 
 	key[16] uint8 // Keys
+
+	draw_flag bool
 }
 
 func emu_init(chip8 *Chip8) {
@@ -98,6 +100,26 @@ func opcode_handling(chip8 *Chip8) {
 
 }
 
+func set_keys(chip8 *Chip8) {
+// Check for newly pressed keys
+}
+
 func main() {
+
+	// Graphics
+	// Input
+
+	emu := Chip8()
+	emu.emu_init()
+
+	for {
+		emu.emu_cycle()
+
+		if emu.draw_flag {
+			//Graphics should be drawn
+		}
+
+		emu.set_keys() // Check for new keypresses by the user
+	}
 
 }
