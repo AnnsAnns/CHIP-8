@@ -79,6 +79,20 @@ func (chip8 *Chip8) emu_cycle() {
 
 	// Decode opcode
 	switch (chip8.opcode & 0xF000) {
+	
+	case 0x0000:
+		switch (chip8.opcode & 0x000F) {
+		case 0x0000: // 0x00E0: Clears the screen
+		break
+
+		case 0x000E: // 0x00EE: Returns from subroutine
+		chip8.pc = uint(chip8.memory[chip8.stackpointer]) << 8 | uint(chip8.memory[chip8.stackpointer + 1])
+		chip8.stackpointer -= 1
+		chip8.pc += 2 // Might be wrong here
+		break
+		} 
+		break
+
 	case 0xA000: // ANNN: Sets I to the adress NNN
 		chip8.I = chip8.opcode & 0x0FFF
 		chip8.pc += 2
