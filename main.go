@@ -77,7 +77,7 @@ func (chip8 *Chip8) emu_init() {
 func (chip8 *Chip8) emu_cycle() {
 	chip8.opcode = uint(chip8.memory[chip8.pc]) << 8 | uint(chip8.memory[chip8.pc + 1]) // Get next opcode
 
-	// Decode opcode
+	// Decode opcode, pc += 2 -> next cycle, pc += 4 -> skip cycle
 	switch (chip8.opcode & 0xF000) {
 	
 	case 0x0000:
@@ -90,17 +90,33 @@ func (chip8 *Chip8) emu_cycle() {
 		chip8.stackpointer -= 1
 		chip8.pc += 2 // Might be wrong here
 		break
-		} 
+		}
 		break
-
-	case 0xA000: // ANNN: Sets I to the adress NNN
-		chip8.I = chip8.opcode & 0x0FFF
-		chip8.pc += 2
+	case 0x1000: // 1NNN: Jump to location nnn.
+		chip8.pc = chip8.opcode & 0x0FFF
 		break
 	case 0x2000: // 2NNN: Calls subroutine at adress NNN
 		chip8.stack[chip8.stackpointer] = chip8.pc
 		chip8.stackpointer += 1
 		chip8.pc = chip8.opcode & 0x0FFF
+		break
+	case 0x3000: // 3XKK Skip next instruction if Vx = kk.
+		if chip8.V[chip8.opcode & 0x0F00] == byte(chip8.opcode & 0x00FF) {
+			chip8.pc += 4
+		} else {
+			chip8.pc += 2
+		}
+		break
+	case 0x4000: // 4XKK Skip next instruction if NOT Vx = kk.
+		if chip8.V[chip8.opcode & 0x0F00] != byte(chip8.opcode & 0x00FF) {
+			chip8.pc += 4
+		} else {
+			chip8.pc += 2
+		}
+		break
+	case 0xA000: // ANNN: Sets I to the adress NNN
+		chip8.I = chip8.opcode & 0x0FFF
+		chip8.pc += 2
 		break
 
 	//default:
