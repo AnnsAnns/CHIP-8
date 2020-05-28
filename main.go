@@ -1,4 +1,4 @@
-package chip8
+package main
 
 import "io/ioutil"
 import "fmt"
@@ -27,7 +27,7 @@ type Chip8 struct {
 	draw_flag bool
 }
 
-func emu_init(chip8 *Chip8) {
+func (chip8 *Chip8) emu_init() {
 	//Clears all variables
 	chip8.pc = 0x200
 	chip8.opcode = 0
@@ -69,7 +69,7 @@ func emu_init(chip8 *Chip8) {
 
 }
 
-func emu_cycle(chip8 *Chip8) {
+func (chip8 *Chip8) emu_cycle() {
 	chip8.opcode = uint(chip8.memory[chip8.pc]) << 8 | uint(chip8.memory[chip8.pc + 1]) // Get next opcode
 
 	// Decode opcode
@@ -96,11 +96,11 @@ func emu_cycle(chip8 *Chip8) {
 	}
 }
 
-func opcode_handling(chip8 *Chip8) {
+func (chip8 *Chip8) opcode_handling() {
 
 }
 
-func set_keys(chip8 *Chip8) {
+func (chip8 *Chip8) set_keys() {
 // Check for newly pressed keys
 }
 
@@ -109,7 +109,7 @@ func main() {
 	// Graphics
 	// Input
 
-	emu := Chip8()
+	var emu Chip8
 	emu.emu_init()
 
 	for {
@@ -121,5 +121,4 @@ func main() {
 
 		emu.set_keys() // Check for new keypresses by the user
 	}
-
 }
