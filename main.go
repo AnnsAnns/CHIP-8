@@ -1,70 +1,103 @@
-package main
+package chip8
 
-import "fmt"
 import "io/ioutil"
+import "fmt"
 
-var opcode uint16 // Should be short-ish?
-var memory[4096] byte // Should be char-ish?
+type Chip8 struct {
+	memory[4096] byte // 4096 bytes of pure Memory
 
-// https://en.wikipedia.org/wiki/CHIP-8#Virtual_machine_description
-// 4096 Total, 512 CHIP-8 Interpreter, 0-256 Display, 257-257+96 Call Stack and other stuff
-// Rest for the games
+	//0x0 - 0x1FF Chip8 Interpreter
+	//0x050-0x0A0 Fonts
+	//0x200-0xFFF Program and RAM
 
-var V[16] byte // CPU Registers
-var I uint // Index Register I
-var pc uint = 0x200 // Program Counter (PC)
-var gfx[64 * 32] byte // resolution of CHIP-8
+	opcode uint // Place for the opcode
+	V[16] byte // CPU registers
+	I uint // Index register
+	pc uint // Program Counter
+	gfx[64*32] byte // Graphics at a staggering 64x32 pixels
 
-var delay_timer byte
-var sound_timer byte
+	delay_timer int
+	sound_timer int
 
-var stack[16] uint16 //16 levels of Stack
-var sp uint // Stack Pointer
+	stack[16] uint16
+	stackpointer uint
 
-var key[16] byte // Keypad
+	key[16] uint8 // Keys
+}
 
-func rom_load() {
-	program, err := ioutil.ReadFile("TETRIS")
+func emu_init(chip8 *Chip8) {
+	//Clears all variables
+	chip8.pc = 0x200
+	chip8.opcode = 0
+	chip8.I = 0
+	chip8.stackpointer = 0
+
+	// Clear GFX
+	for i := range chip8.gfx {
+		chip8.gfx[i] = 0
+	}
+
+	// Clear Stack
+	for i := range chip8.stack {
+		chip8.stack[i] = 0
+	}
+
+	// Clear registers V0-VF
+	for i := range chip8.V {
+		chip8.V[i] = 0
+	}
+
+	// Clear Memory
+	for i := range chip8.memory {
+		chip8.memory[i] = 0
+	}
+
+	// Load Fontset
+
+	// Load Game
+	game, err := ioutil.ReadFile("TETRIS")
 	if err != nil {
-		fmt.Println("Error Loading ROM")
+		fmt.Println("Loading game failed!")
 		panic(err)
 	}
 
-	for i, bit := range program {
-		memory[512+i] = bit
+	for i, b := range game {
+		chip8.memory[512 + i] = b
 	}
-}
-
-func emu_init() {
 
 }
 
-func emu_cycle() {
-	opcode = uint16(memory[pc] << 8 | memory[pc+1])
-}
+func emu_cycle(chip8 *Chip8) {
+	chip8.opcode = uint(chip8.memory[chip8.pc]) << 8 | uint(chip8.memory[chip8.pc + 1]) // Get next opcode
 
-func decode_opcodes(opcode uint16) {
-
-	switch (opcode & 0xF000) {
-	case 0x0000:
-		switch(opcode & 0x000F) {
-		case 0x0000: // Clears the screen
-
+	// Decode opcode
+	switch (chip8.opcode & 0xF000) {
+	case 0xA000: // ANNN: Sets I to the adress NNN
+		chip8.I = chip8.opcode & 0x0FFF
+		chip8.pc += 2
 		break
+	
+	default:
+		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
+	}
 
-		case 0x000E: // Returns from subroutine
+	//Updates Timers
+	if chip8.delay_timer > 0 {
+		chip8.delay_timer -= 1
+	}
 
-		break
-
-		default:
-			fmt.Printf("Unknown opcode [0x0000]: 0x%X\n", opcode)
+	if chip8.sound_timer > 0 {
+		if chip8.sound_timer == 1 {
+			fmt.Println("Imagine that this is beeping right now!")
+			chip8.sound_timer -= 1
 		}
-	break
-
 	}
+}
+
+func opcode_handling(chip8 *Chip8) {
+
 }
 
 func main() {
-
 
 }
