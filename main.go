@@ -54,7 +54,11 @@ func (chip8 *Chip8) emu_init() {
 		chip8.memory[i] = 0
 	}
 
+	fmt.Println("Cleared all variables!")
+
 	// Load Fontset
+
+	fmt.Println("Loaded font!")
 
 	// Load Game
 	game, err := ioutil.ReadFile("TETRIS")
@@ -67,6 +71,7 @@ func (chip8 *Chip8) emu_init() {
 		chip8.memory[512 + i] = b
 	}
 
+	fmt.Println("Loaded game!")
 }
 
 func (chip8 *Chip8) emu_cycle() {
@@ -81,6 +86,7 @@ func (chip8 *Chip8) emu_cycle() {
 	
 	default:
 		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
+		panic(chip8.opcode)
 	}
 
 	//Updates Timers
