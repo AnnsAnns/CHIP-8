@@ -19,7 +19,7 @@ type Chip8 struct {
 	delay_timer int
 	sound_timer int
 
-	stack[16] uint16
+	stack[16] uint
 	stackpointer uint
 
 	key[16] uint8 // Keys
@@ -83,10 +83,15 @@ func (chip8 *Chip8) emu_cycle() {
 		chip8.I = chip8.opcode & 0x0FFF
 		chip8.pc += 2
 		break
-	
-	default:
-		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
-		panic(chip8.opcode)
+	case 0x2000: // 2NNN: Calls subroutine at adress NNN
+		chip8.stack[chip8.stackpointer] = chip8.pc
+		chip8.stackpointer += 1
+		chip8.pc = chip8.opcode & 0x0FFF
+		break
+
+	//default:
+	//	fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
+	//	panic(chip8.opcode)
 	}
 
 	//Updates Timers
