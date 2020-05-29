@@ -77,13 +77,20 @@ func (chip8 *Chip8) emu_init() {
 func (chip8 *Chip8) emu_cycle() {
 	chip8.opcode = uint(chip8.memory[chip8.pc]) << 8 | uint(chip8.memory[chip8.pc + 1]) // Get next opcode
 
+	fmt.Println(chip8.opcode)
+
 	// Decode opcode, pc += 2 -> next cycle, pc += 4 -> skip cycle
 	switch (chip8.opcode & 0xF000) {
 	
 	case 0x0000:
 		switch (chip8.opcode & 0x000F) {
 		case 0x0000: // 0x00E0: Clears the screen
-		break
+			// Clear GFX
+			for i := range chip8.gfx {
+				chip8.gfx[i] = 0
+			}
+			chip8.pc += 2
+			break
 
 		case 0x000E: // 0x00EE: Returns from subroutine
 		chip8.pc = uint(chip8.memory[chip8.stackpointer]) << 8 | uint(chip8.memory[chip8.stackpointer + 1])
@@ -138,29 +145,29 @@ func (chip8 *Chip8) emu_cycle() {
 		case 0x0001: // 8XY1: set Vx = Vx OR Vy.
 			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] | chip8.V[chip8.opcode & 0x00F0]
 			chip8.pc += 2
-		break
-		case 0x0002: // 8XY2: Set Vx = Vx AND Vy.
+			break
+		case 0x0002: // 8XY2: Set Vx = Vx AND Vy. WARNING: This implementation is wrong!
 			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] & chip8.V[chip8.opcode & 0x00F0]
 			chip8.pc += 2
-		break
+			break
 		case 0x0003: // 8XY3: Set Vx = Vx XOR Vy.
 			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] ^ chip8.V[chip8.opcode & 0x00F0]
 			chip8.pc += 2
-		break
+			break
 		case 0x0004: // 8XY4: Set Vx = Vx + Vy, set VF = carry.
 			// TODO: Implement
-		break
+			break
 		case 0x0005: // 8XY5: Set Vx = Vx - Vy, set VF = NOT borrow.
-		if chip8.V[chip8.opcode & 0x0F00] > chip8.V[chip8.opcode & 0x00F0] {
-			chip8.V[0xF] = 1
-		} else {
-			chip8.V[0xF] = 0
-		}
-		chip8.V[chip8.opcode & 0x0F00] -= chip8.V[chip8.opcode & 0x00F0]
-		chip8.pc += 2
-		break
+			if chip8.V[chip8.opcode & 0x0F00] > chip8.V[chip8.opcode & 0x00F0] {
+				chip8.V[0xF] = 1
+			} else {
+				chip8.V[0xF] = 0
+			}
+			chip8.V[chip8.opcode & 0x0F00] -= chip8.V[chip8.opcode & 0x00F0]
+			chip8.pc += 2
+			break
 		case 0x0006: // 8XY6: Set Vx = Vx SHR 1.
-		break
+			break
 		case 0x0007: // 8XY7: Set Vx = Vy - Vx, set VF = NOT borrow.
 			if chip8.V[chip8.opcode & 0x00F0] > chip8.V[chip8.opcode & 0x0F00] {
 				chip8.V[0xF] = 1
@@ -169,17 +176,31 @@ func (chip8 *Chip8) emu_cycle() {
 			}
 			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x00F0] - chip8.V[chip8.opcode & 0x0F00]
 			chip8.pc += 2
-		break
+			break
 		case 0x000E: // 8XY8: Set Vx = Vx SHL 1.
 			// TO:DO: Implement
 		break
 		}
 		break
+	case 0x9000: // 9XY0: Skip next instruction if Vx != Vy.
+		if chip8.V[chip8.opcode & 0x0F00] != chip8.V[chip8.opcode & 0x00F0] {
+			chip8.pc += 2 // Add 2 so we skip
+		}
+		chip8.pc += 2
+		break
 	case 0xA000: // ANNN: Sets I to the adress NNN
 		chip8.I = chip8.opcode & 0x0FFF
 		chip8.pc += 2
 		break
-
+	case 0xB000: // BNNN: Jump to location nnn + V0
+		chip8.pc = (chip8.opcode & 0x0FFF) + uint(chip8.V[0x0])
+		break // Don't go to the next instruction since we jump to a location
+	case 0xC000: // Cxkk: Set Vx = random byte AND kk.
+		break // TODO: Implement
+	case 0xD000: // Dxyn: Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+		break
+	//case 0xE000: // 0xEx9E: Skip next instruction if key with the value of Vx is pressed.
+	//	break
 	default:
 		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
 		// panic(chip8.opcode)
