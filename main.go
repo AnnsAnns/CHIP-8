@@ -93,10 +93,10 @@ func (chip8 *Chip8) emu_cycle() {
 			break
 
 		case 0x000E: // 0x00EE: Returns from subroutine
-		chip8.pc = uint(chip8.memory[chip8.stackpointer]) << 8 | uint(chip8.memory[chip8.stackpointer + 1])
-		chip8.stackpointer -= 1
-		chip8.pc += 2 // Might be wrong here
-		break
+			chip8.pc = uint(chip8.memory[chip8.stackpointer]) << 8 | uint(chip8.memory[chip8.stackpointer + 1])
+			// chip8.stackpointer -= 1 // I think that's not needed? This function seems to be broken either way
+			chip8.pc += 2 // Might be wrong here
+			break
 		}
 		break
 	case 0x1000: // 1NNN: Jump to location nnn.
@@ -129,7 +129,7 @@ func (chip8 *Chip8) emu_cycle() {
 		}
 		break
 	case 0x6000: // 6xkk: Set Vx = kk
-		chip8.V[chip8.opcode & 0x0F00] = byte(chip8.opcode & 0x00FF)
+		chip8.V[chip8.opcode >> 8 & 0xF] = byte(chip8.opcode & 0xFF)
 		chip8.pc += 2
 		break
 	case 0x7000: // 7xkk: Vx = Vx + kk.
@@ -199,6 +199,13 @@ func (chip8 *Chip8) emu_cycle() {
 		break // TODO: Implement
 	case 0xD000: // Dxyn: Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
 		break
+	case 0xE000:
+		switch chip8.opcode & 0x000F {
+		case 0x000E: // Ex9E: Skip next instruction if key with the value of Vx is pressed
+			break
+		case 0x0001: // ExA1: Skip next instruction if key with the value of Vx is not pressed.
+			break
+		}
 	//case 0xE000: // 0xEx9E: Skip next instruction if key with the value of Vx is pressed.
 	//	break
 	default:
