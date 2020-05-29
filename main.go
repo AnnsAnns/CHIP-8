@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 )
 
-type Chip8 struct {
+type Chip8 struct { 
+	// All data of the CHIP8 Emulator
+
 	memory [4096]byte // 4096 bytes of pure Memory
 
 	//0x0 - 0x1FF Chip8 Interpreter
@@ -18,18 +20,18 @@ type Chip8 struct {
 	pc     uint          // Program Counter
 	gfx    [64 * 32]byte // Graphics at a staggering 64x32 pixels
 
-	delay_timer int
-	sound_timer int
+	delayTimer int
+	soundTimer int
 
 	stack        [16]uint
 	stackpointer uint
 
 	key [16]uint8 // Keys
 
-	draw_flag bool
+	drawFlag bool
 }
 
-func (chip8 *Chip8) emu_init() {
+func (chip8 *Chip8) emuInit() {
 	//Clears all variables
 	chip8.pc = 0x200
 	chip8.opcode = 0
@@ -59,7 +61,7 @@ func (chip8 *Chip8) emu_init() {
 	fmt.Println("Cleared all variables!")
 
 	// Load Fontset
-	for i, b := range Rca_1802 {
+	for i, b := range rca1802 {
 		chip8.memory[i] = b
 	}
 
@@ -79,7 +81,7 @@ func (chip8 *Chip8) emu_init() {
 	fmt.Println("Loaded game!")
 }
 
-func (chip8 *Chip8) emu_cycle() {
+func (chip8 *Chip8) emuCycle() {
 	chip8.opcode = uint(chip8.memory[chip8.pc]) << 8 | uint(chip8.memory[chip8.pc + 1]) // Get next opcode
 
 	fmt.Println(chip8.opcode)
@@ -109,7 +111,7 @@ func (chip8 *Chip8) emu_cycle() {
 		break
 	case 0x2000: // 2NNN: Calls subroutine at adress NNN
 		chip8.stack[chip8.stackpointer] = chip8.pc
-		chip8.stackpointer += 1
+		chip8.stackpointer++
 		chip8.pc = chip8.opcode & 0x0FFF
 		break
 	case 0x3000: // 3XKK Skip next instruction if Vx = kk.
@@ -219,23 +221,23 @@ func (chip8 *Chip8) emu_cycle() {
 	}
 
 	//Updates Timers
-	if chip8.delay_timer > 0 {
-		chip8.delay_timer -= 1
+	if chip8.delayTimer > 0 {
+		chip8.delayTimer--
 	}
 
-	if chip8.sound_timer > 0 {
-		if chip8.sound_timer == 1 {
+	if chip8.soundTimer > 0 {
+		if chip8.soundTimer == 1 {
 			fmt.Println("Imagine that this is beeping right now!")
-			chip8.sound_timer -= 1
+			chip8.soundTimer--
 		}
 	}
 }
 
-func (chip8 *Chip8) opcode_handling() {
+func (chip8 *Chip8) opcodeHandling() {
 
 }
 
-func (chip8 *Chip8) set_keys() {
+func (chip8 *Chip8) setKeys() {
 	// Check for newly pressed keys
 }
 
@@ -245,22 +247,22 @@ func main() {
 	// Input
 
 	var emu Chip8
-	emu.emu_init()
+	emu.emuInit()
 
-	for x := 0; x != 15; x += 1 { // Limit execution in test phase
-		emu.emu_cycle()
+	for x := 0; x != 15; x++ { // Limit execution in test phase
+		emu.emuCycle()
 
-		if emu.draw_flag {
+		if emu.drawFlag {
 			//Graphics should be drawn
 		}
 
-		emu.set_keys() // Check for new keypresses by the user
+		emu.setKeys() // Check for new keypresses by the user
 	}
 }
 
-/// rca_1802 ROM for the CHIP-8 virtual machine.
-/// Shamelessly stolen from: https://github.com/massung/CHIP-8/blob/4a496ca1e99cf4f288a33e26e58c953828d35c86/chip8/rom.go
-var Rca_1802 = [0x200]byte{
+// rca_1802 ROM for the CHIP-8 virtual machine.
+// Shamelessly stolen from: https://github.com/massung/CHIP-8/blob/4a496ca1e99cf4f288a33e26e58c953828d35c86/chip8/rom.go
+var rca1802 = [0x200]byte{
 	0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20,
 	0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0,
 	0x10, 0xF0, 0x10, 0xF0, 0xA0, 0xA0, 0xF0, 0x20,
