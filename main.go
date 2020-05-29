@@ -136,20 +136,42 @@ func (chip8 *Chip8) emu_cycle() {
 			chip8.pc += 2
 			break
 		case 0x0001: // 8XY1: set Vx = Vx OR Vy.
+			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] | chip8.V[chip8.opcode & 0x00F0]
+			chip8.pc += 2
 		break
 		case 0x0002: // 8XY2: Set Vx = Vx AND Vy.
+			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] & chip8.V[chip8.opcode & 0x00F0]
+			chip8.pc += 2
 		break
 		case 0x0003: // 8XY3: Set Vx = Vx XOR Vy.
+			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] ^ chip8.V[chip8.opcode & 0x00F0]
+			chip8.pc += 2
 		break
 		case 0x0004: // 8XY4: Set Vx = Vx + Vy, set VF = carry.
+			// TODO: Implement
 		break
 		case 0x0005: // 8XY5: Set Vx = Vx - Vy, set VF = NOT borrow.
+		if chip8.V[chip8.opcode & 0x0F00] > chip8.V[chip8.opcode & 0x00F0] {
+			chip8.V[0xF] = 1
+		} else {
+			chip8.V[0xF] = 0
+		}
+		chip8.V[chip8.opcode & 0x0F00] -= chip8.V[chip8.opcode & 0x00F0]
+		chip8.pc += 2
 		break
 		case 0x0006: // 8XY6: Set Vx = Vx SHR 1.
 		break
 		case 0x0007: // 8XY7: Set Vx = Vy - Vx, set VF = NOT borrow.
+			if chip8.V[chip8.opcode & 0x00F0] > chip8.V[chip8.opcode & 0x0F00] {
+				chip8.V[0xF] = 1
+			} else {
+				chip8.V[0xF] = 0
+			}
+			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x00F0] - chip8.V[chip8.opcode & 0x0F00]
+			chip8.pc += 2
 		break
 		case 0x000E: // 8XY8: Set Vx = Vx SHL 1.
+			// TO:DO: Implement
 		break
 		}
 		break
@@ -158,9 +180,9 @@ func (chip8 *Chip8) emu_cycle() {
 		chip8.pc += 2
 		break
 
-	//default:
-	//	fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
-	//	panic(chip8.opcode)
+	default:
+		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
+		// panic(chip8.opcode)
 	}
 
 	//Updates Timers
@@ -192,7 +214,7 @@ func main() {
 	var emu Chip8
 	emu.emu_init()
 
-	for {
+	for x := 0; x != 15; x += 1{ // Limit execution in test phase
 		emu.emu_cycle()
 
 		if emu.draw_flag {
