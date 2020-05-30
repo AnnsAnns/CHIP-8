@@ -86,6 +86,16 @@ func (chip8 *Chip8) emuCycle() {
 
 	fmt.Println(chip8.opcode)
 
+	// Different variables used by operators to clean the code
+	// See: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#0.0
+
+	//a := chip8.opcode & 0x0FFF
+	//b := chip8.opcode & 0x00FF
+	NNN := chip8.opcode & 0x0FFF
+	KK := byte(chip8.opcode & 0x00FF)
+	X := byte(chip8.opcode >> 8 & 0x000F)
+	Y := byte(chip8.opcode >> 4 & 0x000F)
+
 	// Decode opcode, pc += 2 -> next cycle, pc += 4 -> skip cycle
 	switch chip8.opcode & 0xF000 {
 
@@ -107,81 +117,83 @@ func (chip8 *Chip8) emuCycle() {
 		}
 		break
 	case 0x1000: // 1NNN: Jump to location nnn.
-		chip8.pc = chip8.opcode & 0x0FFF
+		chip8.pc = NNN
 		break
 	case 0x2000: // 2NNN: Calls subroutine at adress NNN
+		// TODO: Investigate possible bug here
 		chip8.stack[chip8.stackpointer] = chip8.pc
 		chip8.stackpointer++
-		chip8.pc = chip8.opcode & 0x0FFF
+		chip8.pc = NNN
 		break
 	case 0x3000: // 3XKK Skip next instruction if Vx = kk.
-		if chip8.V[chip8.opcode & 0x0F00] == byte(chip8.opcode & 0x00FF) {
+		if chip8.V[X] == KK {
 			chip8.pc += 4
 		} else {
 			chip8.pc += 2
 		}
 		break
 	case 0x4000: // 4XKK Skip next instruction if NOT Vx = kk.
-		if chip8.V[chip8.opcode & 0x0F00] != byte(chip8.opcode & 0x00FF) {
+		if chip8.V[X] != KK {
 			chip8.pc += 4
 		} else {
 			chip8.pc += 2
 		}
 		break
 	case 0x5000: // 5xy0: Skip next instruction if Vx = Vy.
-		if chip8.V[chip8.opcode & 0x0F00] == chip8.V[chip8.opcode & 0x00F0] {
+		if chip8.V[X] == chip8.V[Y] {
 			chip8.pc += 4
 		} else {
 			chip8.pc += 2
 		}
 		break
 	case 0x6000: // 6xkk: Set Vx = kk
-		chip8.V[chip8.opcode & 0x0F00] = byte(chip8.opcode & 0x00FF)
+		chip8.V[X] = KK
 		chip8.pc += 2
 		break
 	case 0x7000: // 7xkk: Vx = Vx + kk.
-		chip8.V[chip8.opcode & 0x0F00] += byte(chip8.opcode & 0x00FF)
+		chip8.V[X] += KK
 		chip8.pc += 2
 		break
 	case 0x8000:
 		switch chip8.opcode & 0x000F {
 		case 0x0000: // 8XY0: Set Vx = Vy.
-			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x00F0]
+			chip8.V[X] = chip8.V[Y]
 			chip8.pc += 2
 			break
 		case 0x0001: // 8XY1: set Vx = Vx OR Vy.
-			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] | chip8.V[chip8.opcode & 0x00F0]
+			chip8.V[X] = chip8.V[X] | chip8.V[Y]
 			chip8.pc += 2
 			break
 		case 0x0002: // 8XY2: Set Vx = Vx AND Vy. WARNING: This implementation is wrong!
-			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] & chip8.V[chip8.opcode & 0x00F0]
+			chip8.V[X] = chip8.V[X] & chip8.V[Y]
 			chip8.pc += 2
 			break
 		case 0x0003: // 8XY3: Set Vx = Vx XOR Vy.
-			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x0F00] ^ chip8.V[chip8.opcode & 0x00F0]
+			chip8.V[X] = chip8.V[X] ^ chip8.V[Y]
 			chip8.pc += 2
 			break
 		case 0x0004: // 8XY4: Set Vx = Vx + Vy, set VF = carry.
 			// TODO: Implement
 			break
 		case 0x0005: // 8XY5: Set Vx = Vx - Vy, set VF = NOT borrow.
-			if chip8.V[chip8.opcode & 0x0F00] > chip8.V[chip8.opcode & 0x00F0] {
+			// Is this correct, why did I implement it like that?
+			if chip8.V[X] > chip8.V[Y] {
 				chip8.V[0xF] = 1
 			} else {
 				chip8.V[0xF] = 0
 			}
-			chip8.V[chip8.opcode & 0x0F00] -= chip8.V[chip8.opcode & 0x00F0]
+			chip8.V[X] -= chip8.V[Y]
 			chip8.pc += 2
 			break
 		case 0x0006: // 8XY6: Set Vx = Vx SHR 1.
 			break
 		case 0x0007: // 8XY7: Set Vx = Vy - Vx, set VF = NOT borrow.
-			if chip8.V[chip8.opcode & 0x00F0] > chip8.V[chip8.opcode & 0x0F00] {
+			if chip8.V[Y] > chip8.V[X] {
 				chip8.V[0xF] = 1
 			} else {
 				chip8.V[0xF] = 0
 			}
-			chip8.V[chip8.opcode & 0x0F00] = chip8.V[chip8.opcode & 0x00F0] - chip8.V[chip8.opcode & 0x0F00]
+			chip8.V[X] = chip8.V[Y] - chip8.V[X]
 			chip8.pc += 2
 			break
 		case 0x000E: // 8XY8: Set Vx = Vx SHL 1.
@@ -190,17 +202,17 @@ func (chip8 *Chip8) emuCycle() {
 		}
 		break
 	case 0x9000: // 9XY0: Skip next instruction if Vx != Vy.
-		if chip8.V[chip8.opcode & 0x0F00] != chip8.V[chip8.opcode & 0x00F0] {
+		if chip8.V[X] != chip8.V[Y] {
 			chip8.pc += 2 // Add 2 so we skip
 		}
 		chip8.pc += 2
 		break
 	case 0xA000: // ANNN: Sets I to the adress NNN
-		chip8.I = chip8.opcode & 0x0FFF
+		chip8.I = NNN
 		chip8.pc += 2
 		break
 	case 0xB000: // BNNN: Jump to location nnn + V0
-		chip8.pc = (chip8.opcode & 0x0FFF) + uint(chip8.V[0x0])
+		chip8.pc = NNN + uint(chip8.V[0x0])
 		break // Don't go to the next instruction since we jump to a location
 	case 0xC000: // Cxkk: Set Vx = random byte AND kk.
 		break // TODO: Implement
