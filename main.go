@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 )
 
 type Chip8 struct { 
@@ -112,7 +113,7 @@ func (chip8 *Chip8) emuCycle() {
 		case 0x000E: // 0x00EE: Returns from subroutine
 			chip8.pc = uint(chip8.memory[chip8.stackpointer]) << 8 | uint(chip8.memory[chip8.stackpointer + 1])
 			// chip8.stackpointer -= 1 // I think that's not needed? This function seems to be broken either way
-			chip8.pc += 2 // Might be wrong here
+			// chip8.pc += 2 // Might be wrong here <- Possibly fixed a big by deleting it? We'll see
 			break
 		}
 		break
@@ -215,6 +216,8 @@ func (chip8 *Chip8) emuCycle() {
 		chip8.pc = NNN + uint(chip8.V[0x0])
 		break // Don't go to the next instruction since we jump to a location
 	case 0xC000: // Cxkk: Set Vx = random byte AND kk.
+		chip8.V[X] = byte(rand.Intn(255)) & KK
+		chip8.pc += 2
 		break // TODO: Implement
 	case 0xD000: // Dxyn: Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
 		break
@@ -295,7 +298,7 @@ func main() {
 	var emu Chip8
 	emu.emuInit()
 
-	for { // Limit execution in test phase
+	for i := 0; i != 15; i++{ // Limit execution in test phase
 		emu.emuCycle()
 
 		if emu.drawFlag {
