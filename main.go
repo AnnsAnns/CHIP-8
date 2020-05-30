@@ -119,10 +119,10 @@ func (chip8 *Chip8) emuCycle() {
 	case 0x1000: // 1NNN: Jump to location nnn.
 		chip8.pc = NNN
 		break
-	case 0x2000: // 2NNN: Calls subroutine at adress NNN
-		// TODO: Investigate possible bug here
-		chip8.stack[chip8.stackpointer] = chip8.pc
-		chip8.stackpointer++
+	case 0x2000: // 2NNN: Calls subroutine at adress NNN, thanks to "massung" for showing me how to correctly implement that.
+		chip8.memory[chip8.stackpointer] = byte(chip8.pc >> 8 / 0x00FF)
+		chip8.memory[chip8.stackpointer + 1] = byte(chip8.pc & 0x00FF)
+
 		chip8.pc = NNN
 		break
 	case 0x3000: // 3XKK Skip next instruction if Vx = kk.
