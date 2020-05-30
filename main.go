@@ -20,13 +20,13 @@ type Chip8 struct {
 	pc     uint          // Program Counter
 	gfx    [64 * 32]byte // Graphics at a staggering 64x32 pixels
 
-	delayTimer int
-	soundTimer int
+	delayTimer uint
+	soundTimer uint
 
 	stack        [16]uint
 	stackpointer uint
 
-	key [16]uint8 // Keys
+	key [16]bool // Keys
 
 	drawFlag bool
 }
@@ -225,8 +225,42 @@ func (chip8 *Chip8) emuCycle() {
 		case 0x0001: // ExA1: Skip next instruction if key with the value of Vx is not pressed.
 			break
 		}
-	//case 0xE000: // 0xEx9E: Skip next instruction if key with the value of Vx is pressed.
-	//	break
+		break
+	case 0xF000:
+		switch chip8.opcode & 0x00FF {
+		case 0x0007: // FX07: Set Vx = delay timer value.
+			chip8.V[X] = byte(chip8.delayTimer)
+			chip8.pc += 2
+			break
+		case 0x000A: // FX0A: Wait for a key press, store the value of the key in Vx.
+			break // TODO
+		case 0x0015: // FX15: Set delay timer = Vx.
+			chip8.delayTimer = uint(chip8.V[X])
+			chip8.pc += 2
+		case 0x0018: // FX18: Set sound timer = Vx.
+			chip8.soundTimer = uint(chip8.V[X])
+			chip8.pc += 2
+		case 0x001E: // FX1E: Set I = I + Vx.
+			chip8.I += uint(chip8.V[X])
+			chip8.pc += 2
+		case 0x0029: // FX29: Set I = location of sprite for digit Vx.
+			break // TODO
+		case 0x0033: // FX33: Store BCD representation of Vx in memory locations I, I+1, and I+2.
+			break // TODO
+		case 0x0055: // FX55: Store registers V0 through Vx in memory starting at location I.
+			for val := byte(0); val != X; val++ {
+				chip8.memory[chip8.I + uint(val)] = chip8.V[val]
+			}
+			chip8.pc += 2
+			break
+		case 0x0065: // FX65: Read registers V0 through Vx from memory starting at location I.
+			for val := byte(0); val != X; val++ {
+				chip8.V[val] = chip8.memory[chip8.I + uint(val)]
+			}
+			chip8.pc += 2
+			break
+		}
+		break
 	default:
 		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
 		panic(chip8.opcode)
