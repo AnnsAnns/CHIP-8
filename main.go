@@ -229,7 +229,7 @@ func (chip8 *Chip8) emuCycle() {
 	//	break
 	default:
 		fmt.Printf("Unimplemented Opcode 0x%X", chip8.opcode)
-		// panic(chip8.opcode)
+		panic(chip8.opcode)
 	}
 
 	//Updates Timers
@@ -261,7 +261,7 @@ func main() {
 	var emu Chip8
 	emu.emuInit()
 
-	for x := 0; x != 15; x++ { // Limit execution in test phase
+	for { // Limit execution in test phase
 		emu.emuCycle()
 
 		if emu.drawFlag {
